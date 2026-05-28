@@ -24,7 +24,8 @@ export function SessionForm() {
   const toast = useToast();
   const [subjects, setSubjects] = useState<SubjectDTO[]>([]);
   const [subjectId, setSubjectId] = useState("");
-  const [date, setDate] = useState(todayISO());
+  const today = todayISO();
+  const [date, setDate] = useState(today);
   const [minutes, setMinutes] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +44,10 @@ export function SessionForm() {
     const minutesNum = Number(minutes);
     if (!subjectId) {
       toast.show("Please select a subject", "error");
+      return;
+    }
+    if (date > todayISO()) {
+      toast.show("Date cannot be in the future", "error");
       return;
     }
     if (!Number.isInteger(minutesNum) || minutesNum <= 0) {
@@ -84,6 +89,7 @@ export function SessionForm() {
                 id="date"
                 type="date"
                 value={date}
+                max={today}
                 onChange={(e) => setDate(e.target.value)}
                 required
               />
