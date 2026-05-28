@@ -107,14 +107,14 @@ export function NotesFilter() {
       </Card>
 
       {sessions === null ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted">
           Choose a subject and date range, then click <strong>Show notes</strong>.
         </p>
       ) : sessions.length === 0 ? (
-        <p className="text-sm text-slate-500">No sessions found in that range.</p>
+        <p className="text-sm text-muted">No sessions found in that range.</p>
       ) : (
         <>
-          <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="flex items-center justify-between text-sm text-muted">
             <span>
               {sessions.length} session{sessions.length === 1 ? "" : "s"}
             </span>
@@ -127,20 +127,20 @@ export function NotesFilter() {
                   <CardContent>
                     <div className="flex items-center justify-between gap-3 pt-1">
                       <div>
-                        <div className="text-sm font-medium text-slate-900">
+                        <div className="text-sm font-medium text-foreground">
                           {s.subject.name}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-muted">
                           {s.date} · {formatMinutes(s.minutes)}
                         </div>
                       </div>
                     </div>
                     {s.notes ? (
-                      <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">
+                      <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">
                         {s.notes}
                       </p>
                     ) : (
-                      <p className="mt-3 text-sm italic text-slate-400">
+                      <p className="mt-3 text-sm italic text-placeholder">
                         No notes for this session.
                       </p>
                     )}

@@ -145,16 +145,16 @@ export function GoalsManager() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-slate-500">Loading…</p>
+              <p className="text-sm text-muted">Loading…</p>
             ) : goals.length === 0 ? (
-              <p className="text-sm text-slate-500">No goals yet. Create one to start tracking progress.</p>
+              <p className="text-sm text-muted">No goals yet. Create one to start tracking progress.</p>
             ) : (
-              <ul className="flex flex-col divide-y divide-slate-100">
+              <ul className="flex flex-col divide-y divide-border">
                 {goals.map((g) => (
                   <li key={g.id} className="flex items-center justify-between py-3">
                     <div>
-                      <div className="text-sm font-medium text-slate-900">{g.subject.name}</div>
-                      <div className="text-xs text-slate-500">
+                      <div className="text-sm font-medium text-foreground">{g.subject.name}</div>
+                      <div className="text-xs text-muted">
                         {g.period === "WEEKLY" ? "Weekly" : "Monthly"} target ·{" "}
                         {formatMinutes(g.targetMinutes)}
                       </div>

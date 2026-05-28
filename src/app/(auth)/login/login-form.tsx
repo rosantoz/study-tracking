@@ -62,7 +62,7 @@ export function LoginForm() {
               required
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
           <Button type="submit" disabled={submitting}>
             {submitting ? "Signing in…" : "Sign in"}
           </Button>

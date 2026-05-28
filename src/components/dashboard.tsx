@@ -14,9 +14,9 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint?:
     <Card>
       <CardContent>
         <div className="pt-2">
-          <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
-          <div className="mt-1 text-2xl font-bold text-slate-900">{value}</div>
-          {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+          <div className="text-xs uppercase tracking-wide text-muted">{label}</div>
+          <div className="mt-1 text-2xl font-bold text-foreground">{value}</div>
+          {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
         </div>
       </CardContent>
     </Card>
@@ -37,10 +37,10 @@ export function Dashboard() {
   }, [toast]);
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Loading dashboard…</p>;
+    return <p className="text-sm text-muted">Loading dashboard…</p>;
   }
   if (!data) {
-    return <p className="text-sm text-red-600">Could not load dashboard.</p>;
+    return <p className="text-sm text-danger">Could not load dashboard.</p>;
   }
 
   return (

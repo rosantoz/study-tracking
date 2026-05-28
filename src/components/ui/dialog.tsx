@@ -34,7 +34,8 @@ export function Dialog({ open, onClose, title, description, children, className 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ backgroundColor: "var(--overlay)" }}
         onClick={onClose}
         aria-hidden
       />
@@ -43,13 +44,13 @@ export function Dialog({ open, onClose, title, description, children, className 
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative z-10 w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl",
+          "relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl",
           className,
         )}
       >
-        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         {description && (
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
+          <p className="mt-1 text-sm text-muted">{description}</p>
         )}
         <div className="mt-4">{children}</div>
       </div>
