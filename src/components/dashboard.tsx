@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { formatMinutes } from "@/lib/utils";
 import { PerSubjectBar } from "@/components/charts/per-subject-bar";
 import { GoalProgressList } from "@/components/charts/goal-progress";
+import { UpcomingTasks } from "@/components/upcoming-tasks";
 import type { DashboardDTO } from "@/types/api";
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -80,6 +81,8 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <UpcomingTasks />
     </div>
   );
 }

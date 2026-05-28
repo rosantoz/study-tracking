@@ -8,8 +8,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 const items = [
   { href: "/", label: "Dashboard" },
-  { href: "/sessions/new", label: "New session" },
-  { href: "/notes", label: "Notes" },
+  { href: "/sessions", label: "Sessions" },
+  { href: "/planner", label: "Planner" },
   { href: "/goals", label: "Goals" },
 ];
 

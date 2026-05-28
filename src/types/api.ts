@@ -74,6 +74,57 @@ export const goalProgressSchema = z.object({
 });
 export type GoalProgressDTO = z.infer<typeof goalProgressSchema>;
 
+export const taskStatusSchema = z.enum(["PENDING", "COMPLETED"]);
+export type TaskStatus = z.infer<typeof taskStatusSchema>;
+
+export const plannedTaskSchema = z.object({
+  id: z.string(),
+  date: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  objective: z.string(),
+  status: taskStatusSchema,
+  subject: subjectSchema,
+});
+export type PlannedTaskDTO = z.infer<typeof plannedTaskSchema>;
+
+export const createPlannedTaskSchema = z
+  .object({
+    subjectId: z.string().min(1, "Subject is required"),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+    startTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/, "Start time must be HH:MM"),
+    endTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/, "End time must be HH:MM"),
+    objective: z
+      .string()
+      .trim()
+      .min(1, "Objective is required")
+      .max(200, "Objective is too long"),
+  })
+  .refine((d) => d.startTime < d.endTime, {
+    message: "End time must be after start time",
+    path: ["endTime"],
+  });
+export type CreatePlannedTaskInput = z.infer<typeof createPlannedTaskSchema>;
+
+export const updatePlannedTaskSchema = z.object({
+  status: taskStatusSchema,
+});
+export type UpdatePlannedTaskInput = z.infer<typeof updatePlannedTaskSchema>;
+
+export const plannedTasksQuerySchema = z.object({
+  subjectId: z.string().optional(),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  status: taskStatusSchema.optional(),
+});
+export type PlannedTasksQuery = z.infer<typeof plannedTasksQuerySchema>;
+
 export const dashboardSchema = z.object({
   todayMinutes: z.number().int(),
   weekMinutes: z.number().int(),

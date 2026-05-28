@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,67 +11,70 @@ import { useToast } from "@/components/ui/toast";
 import { formatMinutes } from "@/lib/utils";
 import type { SessionDTO, SubjectDTO } from "@/types/api";
 
-function defaultRange() {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - 30);
-  const iso = (d: Date) => {
-    const offset = d.getTimezoneOffset();
-    const local = new Date(d.getTime() - offset * 60 * 1000);
-    return local.toISOString().slice(0, 10);
-  };
-  return { from: iso(start), to: iso(end) };
-}
-
-export function NotesFilter() {
+export function SessionsList() {
   const [subjects, setSubjects] = useState<SubjectDTO[]>([]);
   const [subjectId, setSubjectId] = useState("");
-  const initial = useMemo(() => defaultRange(), []);
-  const [from, setFrom] = useState(initial.from);
-  const [to, setTo] = useState(initial.to);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [sessions, setSessions] = useState<SessionDTO[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const toast = useToast();
+
+  const load = useCallback(
+    async (params: { subjectId?: string; from?: string; to?: string }) => {
+      setLoading(true);
+      try {
+        const { sessions } = await api.sessions.list(params);
+        setSessions(sessions);
+      } catch (err) {
+        toast.show((err as Error).message, "error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast],
+  );
 
   useEffect(() => {
     api.subjects
       .list()
       .then(({ subjects }) => setSubjects(subjects))
       .catch((e) => toast.show((e as Error).message, "error"));
-  }, [toast]);
+    load({});
+  }, [toast, load]);
 
-  async function onSearch(e?: React.FormEvent) {
-    e?.preventDefault();
-    if (!subjectId) {
-      toast.show("Please select a subject", "error");
-      return;
-    }
-    setLoading(true);
-    try {
-      const { sessions } = await api.sessions.list({ subjectId, from, to });
-      setSessions(sessions);
-    } catch (err) {
-      toast.show((err as Error).message, "error");
-    } finally {
-      setLoading(false);
-    }
+  function onApply(e: React.FormEvent) {
+    e.preventDefault();
+    load({
+      subjectId: subjectId || undefined,
+      from: from || undefined,
+      to: to || undefined,
+    });
   }
 
+  function onClear() {
+    setSubjectId("");
+    setFrom("");
+    setTo("");
+    load({});
+  }
+
+  const hasFilters = Boolean(subjectId || from || to);
   const totalMinutes = sessions?.reduce((acc, s) => acc + s.minutes, 0) ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
       <Card>
         <CardContent>
-          <form onSubmit={onSearch} className="grid gap-3 pt-2 sm:grid-cols-4 sm:items-end">
+          <form onSubmit={onApply} className="grid gap-3 pt-2 sm:grid-cols-4 sm:items-end">
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <Label htmlFor="notes-subject">Subject</Label>
+              <Label htmlFor="sessions-subject">Subject</Label>
               <Select
-                id="notes-subject"
+                id="sessions-subject"
                 value={subjectId}
                 onChange={(e) => setSubjectId(e.target.value)}
               >
-                <option value="">Select subject…</option>
+                <option value="">All subjects</option>
                 {subjects.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -80,26 +83,31 @@ export function NotesFilter() {
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="notes-from">From</Label>
+              <Label htmlFor="sessions-from">From</Label>
               <Input
-                id="notes-from"
+                id="sessions-from"
                 type="date"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="notes-to">To</Label>
+              <Label htmlFor="sessions-to">To</Label>
               <Input
-                id="notes-to"
+                id="sessions-to"
                 type="date"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
               />
             </div>
-            <div className="sm:col-span-4 flex justify-end">
+            <div className="sm:col-span-4 flex justify-end gap-2">
+              {hasFilters && (
+                <Button type="button" variant="ghost" onClick={onClear} disabled={loading}>
+                  Clear
+                </Button>
+              )}
               <Button type="submit" disabled={loading}>
-                {loading ? "Loading…" : "Show notes"}
+                {loading ? "Loading…" : "Apply filters"}
               </Button>
             </div>
           </form>
@@ -107,11 +115,13 @@ export function NotesFilter() {
       </Card>
 
       {sessions === null ? (
-        <p className="text-sm text-muted">
-          Choose a subject and date range, then click <strong>Show notes</strong>.
-        </p>
+        <p className="text-sm text-muted">Loading sessions…</p>
       ) : sessions.length === 0 ? (
-        <p className="text-sm text-muted">No sessions found in that range.</p>
+        <p className="text-sm text-muted">
+          {hasFilters
+            ? "No sessions found for those filters."
+            : "No sessions yet. Log your first one above."}
+        </p>
       ) : (
         <>
           <div className="flex items-center justify-between text-sm text-muted">

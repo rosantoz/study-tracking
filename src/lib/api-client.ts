@@ -1,10 +1,14 @@
 import type {
+  CreatePlannedTaskInput,
   CreateSessionInput,
   CreateSubjectInput,
   DashboardDTO,
   GoalDTO,
+  PlannedTaskDTO,
   SessionDTO,
   SubjectDTO,
+  TaskStatus,
+  UpdatePlannedTaskInput,
   UpsertGoalInput,
 } from "@/types/api";
 
@@ -64,6 +68,36 @@ export const api = {
       }),
     delete: (id: string) =>
       request<{ ok: true }>(`/api/goals/${id}`, { method: "DELETE" }),
+  },
+  tasks: {
+    list: (
+      params: {
+        subjectId?: string;
+        from?: string;
+        to?: string;
+        status?: TaskStatus;
+      } = {},
+    ) => {
+      const qs = new URLSearchParams();
+      if (params.subjectId) qs.set("subjectId", params.subjectId);
+      if (params.from) qs.set("from", params.from);
+      if (params.to) qs.set("to", params.to);
+      if (params.status) qs.set("status", params.status);
+      const suffix = qs.toString() ? `?${qs.toString()}` : "";
+      return request<{ tasks: PlannedTaskDTO[] }>(`/api/tasks${suffix}`);
+    },
+    create: (data: CreatePlannedTaskInput) =>
+      request<{ task: PlannedTaskDTO }>("/api/tasks", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: UpdatePlannedTaskInput) =>
+      request<{ task: PlannedTaskDTO }>(`/api/tasks/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      request<{ ok: true }>(`/api/tasks/${id}`, { method: "DELETE" }),
   },
   dashboard: {
     get: () => request<DashboardDTO>("/api/dashboard"),

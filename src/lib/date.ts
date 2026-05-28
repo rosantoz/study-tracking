@@ -1,10 +1,11 @@
 import {
-  startOfDay,
+  eachDayOfInterval,
   endOfDay,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
   endOfMonth,
+  endOfWeek,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
 } from "date-fns";
 
 export function todayRange(now: Date = new Date()) {
@@ -28,4 +29,11 @@ export function rangeForPeriod(period: "WEEKLY" | "MONTHLY", now: Date = new Dat
 
 export function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+export function monthGridDays(viewMonth: Date): Date[] {
+  return eachDayOfInterval({
+    start: startOfWeek(startOfMonth(viewMonth), { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(viewMonth), { weekStartsOn: 1 }),
+  });
 }
