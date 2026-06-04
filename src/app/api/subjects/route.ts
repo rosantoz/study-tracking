@@ -2,16 +2,24 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { badRequest, fromZod, unauthorized } from "@/lib/api-response";
 import { createSubjectSchema } from "@/types/api";
-import { createSubject, listSubjects } from "@/server/repositories/subjects";
+import {
+  createSubject,
+  listSubjects,
+  listSubjectsWithUsage,
+} from "@/server/repositories/subjects";
 
 async function getStudentId() {
   const session = await auth();
   return (session?.user as { id?: string } | undefined)?.id ?? null;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const studentId = await getStudentId();
   if (!studentId) return unauthorized();
+  if (req.nextUrl.searchParams.get("withUsage") === "true") {
+    const subjects = await listSubjectsWithUsage(studentId);
+    return NextResponse.json({ subjects });
+  }
   const subjects = await listSubjects(studentId);
   return NextResponse.json({ subjects });
 }

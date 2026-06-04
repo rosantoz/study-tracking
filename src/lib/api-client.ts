@@ -7,8 +7,10 @@ import type {
   PlannedTaskDTO,
   SessionDTO,
   SubjectDTO,
+  SubjectUsageDTO,
   TaskStatus,
   UpdatePlannedTaskInput,
+  UpdateSubjectInput,
   UpsertGoalInput,
 } from "@/types/api";
 
@@ -38,11 +40,20 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
 export const api = {
   subjects: {
     list: () => request<{ subjects: SubjectDTO[] }>("/api/subjects"),
+    listWithUsage: () =>
+      request<{ subjects: SubjectUsageDTO[] }>("/api/subjects?withUsage=true"),
     create: (data: CreateSubjectInput) =>
       request<{ subject: SubjectDTO }>("/api/subjects", {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    update: (id: string, data: UpdateSubjectInput) =>
+      request<{ subject: SubjectDTO }>(`/api/subjects/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      request<{ ok: true }>(`/api/subjects/${id}`, { method: "DELETE" }),
   },
   sessions: {
     list: (params: { subjectId?: string; from?: string; to?: string } = {}) => {
@@ -58,6 +69,8 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    delete: (id: string) =>
+      request<{ ok: true }>(`/api/sessions/${id}`, { method: "DELETE" }),
   },
   goals: {
     list: () => request<{ goals: GoalDTO[] }>("/api/goals"),

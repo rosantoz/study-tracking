@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -18,6 +19,8 @@ export function SessionsList() {
   const [to, setTo] = useState("");
   const [sessions, setSessions] = useState<SessionDTO[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState<SessionDTO | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
 
   const load = useCallback(
@@ -57,6 +60,24 @@ export function SessionsList() {
     setFrom("");
     setTo("");
     load({});
+  }
+
+  async function onConfirmDelete() {
+    if (!pendingDelete) return;
+    const target = pendingDelete;
+    const prev = sessions;
+    setDeleting(true);
+    setSessions((curr) => curr?.filter((s) => s.id !== target.id) ?? curr);
+    try {
+      await api.sessions.delete(target.id);
+      toast.show("Session deleted", "success");
+      setPendingDelete(null);
+    } catch (err) {
+      setSessions(prev);
+      toast.show((err as Error).message, "error");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const hasFilters = Boolean(subjectId || from || to);
@@ -144,6 +165,15 @@ export function SessionsList() {
                           {s.date} · {formatMinutes(s.minutes)}
                         </div>
                       </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPendingDelete(s)}
+                        aria-label={`Delete ${s.subject.name} session on ${s.date}`}
+                      >
+                        Delete
+                      </Button>
                     </div>
                     {s.notes ? (
                       <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">
@@ -161,6 +191,38 @@ export function SessionsList() {
           </ul>
         </>
       )}
+
+      <Dialog
+        open={pendingDelete !== null}
+        onClose={() => {
+          if (!deleting) setPendingDelete(null);
+        }}
+        title="Delete session?"
+        description={
+          pendingDelete
+            ? `This will permanently delete the ${pendingDelete.subject.name} session from ${pendingDelete.date}. This cannot be undone.`
+            : undefined
+        }
+      >
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setPendingDelete(null)}
+            disabled={deleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={onConfirmDelete}
+            disabled={deleting}
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

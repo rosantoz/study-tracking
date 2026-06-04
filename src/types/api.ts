@@ -10,6 +10,14 @@ export const createSubjectSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
 });
 export type CreateSubjectInput = z.infer<typeof createSubjectSchema>;
+export type UpdateSubjectInput = CreateSubjectInput;
+
+export const subjectUsageSchema = subjectSchema.extend({
+  sessionCount: z.number().int(),
+  goalCount: z.number().int(),
+  taskCount: z.number().int(),
+});
+export type SubjectUsageDTO = z.infer<typeof subjectUsageSchema>;
 
 export const sessionSchema = z.object({
   id: z.string(),

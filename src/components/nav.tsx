@@ -11,6 +11,7 @@ const items = [
   { href: "/sessions", label: "Sessions" },
   { href: "/planner", label: "Planner" },
   { href: "/goals", label: "Goals" },
+  { href: "/subjects", label: "Subjects" },
 ];
 
 export function Nav({ userName }: { userName: string | null }) {

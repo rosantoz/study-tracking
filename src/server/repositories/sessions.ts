@@ -43,6 +43,13 @@ export async function createSession(
   });
 }
 
+export async function deleteSession(studentId: string, sessionId: string) {
+  const result = await prisma.studySession.deleteMany({
+    where: { id: sessionId, studentId },
+  });
+  if (result.count === 0) throw new Error("SESSION_NOT_FOUND");
+}
+
 export async function sumMinutesInRange(
   studentId: string,
   range: { start: Date; end: Date },
