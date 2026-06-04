@@ -133,16 +133,19 @@ export const plannedTasksQuerySchema = z.object({
 });
 export type PlannedTasksQuery = z.infer<typeof plannedTasksQuerySchema>;
 
+export const subjectMinutesSchema = z.object({
+  subjectId: z.string(),
+  subjectName: z.string(),
+  minutes: z.number().int(),
+});
+
 export const dashboardSchema = z.object({
   todayMinutes: z.number().int(),
   weekMinutes: z.number().int(),
-  perSubjectThisWeek: z.array(
-    z.object({
-      subjectId: z.string(),
-      subjectName: z.string(),
-      minutes: z.number().int(),
-    }),
-  ),
+  lifetimeMinutes: z.number().int(),
+  sessionCount: z.number().int(),
+  perSubjectThisWeek: z.array(subjectMinutesSchema),
+  perSubjectAllTime: z.array(subjectMinutesSchema),
   goalsProgress: z.array(goalProgressSchema),
 });
 export type DashboardDTO = z.infer<typeof dashboardSchema>;

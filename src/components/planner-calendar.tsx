@@ -14,6 +14,7 @@ import {
 } from "date-fns";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { TaskFormDialog } from "@/components/task-form-dialog";
 import { isoDate, monthGridDays } from "@/lib/date";
@@ -30,6 +31,9 @@ export function PlannerCalendar() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string>(isoDate(new Date()));
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<PlannedTaskDTO | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const days = useMemo(() => monthGridDays(viewMonth), [viewMonth]);
 
@@ -64,6 +68,24 @@ export function PlannerCalendar() {
   function openDialogFor(day: Date) {
     setDialogDate(isoDate(day));
     setDialogOpen(true);
+  }
+
+  async function onConfirmDelete() {
+    if (!pendingDelete) return;
+    const target = pendingDelete;
+    const prev = tasks;
+    setDeleting(true);
+    setTasks((curr) => curr.filter((t) => t.id !== target.id));
+    try {
+      await api.tasks.delete(target.id);
+      toast.show("Task deleted", "success");
+      setPendingDelete(null);
+    } catch (err) {
+      setTasks(prev);
+      toast.show((err as Error).message, "error");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   function onCreated(task: PlannedTaskDTO) {
@@ -119,10 +141,27 @@ export function PlannerCalendar() {
         <div className="text-sm font-semibold text-foreground">
           {format(viewMonth, "MMMM yyyy")}
         </div>
-        <div className="text-xs text-muted">
-          {loading ? "Loading…" : `${tasks.length} task${tasks.length === 1 ? "" : "s"}`}
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant={deleteMode ? "danger" : "ghost"}
+            size="sm"
+            onClick={() => setDeleteMode((v) => !v)}
+            aria-pressed={deleteMode}
+          >
+            {deleteMode ? "Done" : "Delete mode"}
+          </Button>
+          <span className="hidden text-xs text-muted sm:inline">
+            {loading ? "Loading…" : `${tasks.length} task${tasks.length === 1 ? "" : "s"}`}
+          </span>
         </div>
       </div>
+
+      {deleteMode && (
+        <p className="text-xs text-muted">
+          Delete mode is on — click the ✕ on a task to remove it.
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="grid grid-cols-7 border-b border-border bg-accent/40">
@@ -147,7 +186,9 @@ export function PlannerCalendar() {
               <button
                 type="button"
                 key={key}
-                onClick={() => openDialogFor(day)}
+                onClick={() => {
+                  if (!deleteMode) openDialogFor(day);
+                }}
                 className={cn(
                   "flex min-h-[96px] flex-col items-stretch gap-1 border-b border-r border-border p-1.5 text-left transition-colors hover:bg-accent/60 sm:min-h-[112px]",
                   !inMonth && "bg-background/40",
@@ -168,28 +209,56 @@ export function PlannerCalendar() {
                   {visible.map((t) => (
                     <span
                       key={t.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStatus(t);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleStatus(t);
-                        }
-                      }}
-                      title={`${t.subject.name} · ${t.startTime}–${t.endTime}`}
                       className={cn(
-                        "truncate rounded px-1.5 py-0.5 text-[11px] font-medium",
+                        "flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium",
                         t.status === "COMPLETED"
-                          ? "bg-success-soft text-success-soft-foreground line-through"
+                          ? "bg-success-soft text-success-soft-foreground"
                           : "bg-primary-soft text-primary-soft-foreground",
                       )}
                     >
-                      {t.objective}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleStatus(t);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleStatus(t);
+                          }
+                        }}
+                        title={`${t.subject.name} · ${t.startTime}–${t.endTime}`}
+                        className={cn(
+                          "min-w-0 flex-1 truncate text-left",
+                          t.status === "COMPLETED" && "line-through",
+                        )}
+                      >
+                        {t.objective}
+                      </span>
+                      {deleteMode && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Delete ${t.objective}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPendingDelete(t);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setPendingDelete(t);
+                            }
+                          }}
+                          className="shrink-0 cursor-pointer rounded px-0.5 leading-none opacity-70 hover:opacity-100"
+                        >
+                          ✕
+                        </span>
+                      )}
                     </span>
                   ))}
                   {extra > 0 && (
@@ -208,6 +277,38 @@ export function PlannerCalendar() {
         defaultDate={dialogDate}
         onCreated={onCreated}
       />
+
+      <Dialog
+        open={pendingDelete !== null}
+        onClose={() => {
+          if (!deleting) setPendingDelete(null);
+        }}
+        title="Delete task?"
+        description={
+          pendingDelete
+            ? `Delete "${pendingDelete.objective}" on ${pendingDelete.date} (${pendingDelete.startTime}–${pendingDelete.endTime})? This cannot be undone.`
+            : undefined
+        }
+      >
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setPendingDelete(null)}
+            disabled={deleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={onConfirmDelete}
+            disabled={deleting}
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

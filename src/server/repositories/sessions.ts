@@ -66,15 +66,27 @@ export async function sumMinutesInRange(
   return agg._sum.minutes ?? 0;
 }
 
+export async function lifetimeSessionStats(studentId: string) {
+  const agg = await prisma.studySession.aggregate({
+    where: { studentId },
+    _sum: { minutes: true },
+    _count: { _all: true },
+  });
+  return {
+    totalMinutes: agg._sum.minutes ?? 0,
+    sessionCount: agg._count._all,
+  };
+}
+
 export async function minutesGroupedBySubject(
   studentId: string,
-  range: { start: Date; end: Date },
+  range?: { start: Date; end: Date },
 ) {
   const grouped = await prisma.studySession.groupBy({
     by: ["subjectId"],
     where: {
       studentId,
-      date: { gte: range.start, lte: range.end },
+      ...(range ? { date: { gte: range.start, lte: range.end } } : {}),
     },
     _sum: { minutes: true },
   });

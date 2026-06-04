@@ -3,6 +3,7 @@ import { listGoals } from "@/server/repositories/goals";
 import {
   sumMinutesInRange,
   minutesGroupedBySubject,
+  lifetimeSessionStats,
 } from "@/server/repositories/sessions";
 
 export type GoalProgress = {
@@ -15,10 +16,15 @@ export type GoalProgress = {
   percent: number;
 };
 
+type SubjectMinutes = { subjectId: string; subjectName: string; minutes: number };
+
 export type DashboardData = {
   todayMinutes: number;
   weekMinutes: number;
-  perSubjectThisWeek: { subjectId: string; subjectName: string; minutes: number }[];
+  lifetimeMinutes: number;
+  sessionCount: number;
+  perSubjectThisWeek: SubjectMinutes[];
+  perSubjectAllTime: SubjectMinutes[];
   goalsProgress: GoalProgress[];
 };
 
@@ -27,10 +33,19 @@ export async function getDashboard(studentId: string): Promise<DashboardData> {
   const today = todayRange(now);
   const week = weekRange(now);
 
-  const [todayMinutes, weekMinutes, perSubjectThisWeek, goals] = await Promise.all([
+  const [
+    todayMinutes,
+    weekMinutes,
+    perSubjectThisWeek,
+    perSubjectAllTime,
+    lifetime,
+    goals,
+  ] = await Promise.all([
     sumMinutesInRange(studentId, today),
     sumMinutesInRange(studentId, week),
     minutesGroupedBySubject(studentId, week),
+    minutesGroupedBySubject(studentId),
+    lifetimeSessionStats(studentId),
     listGoals(studentId),
   ]);
 
@@ -55,5 +70,13 @@ export async function getDashboard(studentId: string): Promise<DashboardData> {
     }),
   );
 
-  return { todayMinutes, weekMinutes, perSubjectThisWeek, goalsProgress };
+  return {
+    todayMinutes,
+    weekMinutes,
+    lifetimeMinutes: lifetime.totalMinutes,
+    sessionCount: lifetime.sessionCount,
+    perSubjectThisWeek,
+    perSubjectAllTime,
+    goalsProgress,
+  };
 }
